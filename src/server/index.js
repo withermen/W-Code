@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
-const { createProvider } = require('../providers');
+const { createProvider, listProviders } = require('../providers');
 const { runAgentLoop } = require('../agents/loop');
 const { listSessions, createSession, getWorkspace } = require('../sessions');
 const logger = require('../logger');
@@ -14,12 +14,12 @@ const config = loadConfig();
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, '../../public')));
 
-// Dynamic workspace per session
 app.use('/preview', (req, res, next) => {
   const session = req.query.session || 'default';
-  const ws = getWorkspace(session);
-  express.static(ws)(req, res, next);
+  express.static(getWorkspace(session))(req, res, next);
 });
+
+app.get('/api/providers', (req, res) => res.json(listProviders()));
 
 app.post('/api/chat/stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
@@ -42,10 +42,7 @@ app.post('/api/chat/stream', async (req, res) => {
 });
 
 app.get('/api/sessions', (req, res) => res.json(listSessions()));
-app.post('/api/sessions', (req, res) => {
-  const id = createSession(req.body.name || 'New Project');
-  res.json({ id });
-});
+app.post('/api/sessions', (req, res) => res.json({ id: createSession(req.body.name || 'Project') }));
 
 app.get('/api/workspace', (req, res) => {
   const session = req.query.session || 'default';
