@@ -1,14 +1,31 @@
 let messages = [];
 let currentSession = 'default';
+let apiKeys = JSON.parse(localStorage.getItem('wcode-keys') || '{}');
+
 const messagesEl = document.getElementById('messages');
 const promptEl = document.getElementById('prompt');
 const providerEl = document.getElementById('provider');
+const modelEl = document.getElementById('model');
 const sessionEl = document.getElementById('session');
 const filesEl = document.getElementById('files');
 const frame = document.getElementById('frame');
-const statusEl = document.createElement('div');
-statusEl.style.cssText = 'font-size:0.75rem;color:#666;padding:0.3rem 1rem;';
-document.getElementById('chat').insertBefore(statusEl, document.getElementById('composer'));
+const statusEl = document.getElementById('status');
+const settingsEl = document.getElementById('settings');
+const apiKeyInput = document.getElementById('api-key');
+
+async function loadProviders() {
+  const res = await fetch('/api/providers');
+  const providers = await res.json();
+  providerEl.innerHTML = providers.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+  updateModels();
+}
+function updateModels() {
+  fetch('/api/providers').then(r => r.json()).then(providers => {
+    const p = providers.find(x => x.id === providerEl.value);
+    modelEl.innerHTML = (p?.models || []).map(m => `<option value="${m}">${m}</option>`).join('');
+  });
+}
+providerEl.onchange = updateModels;
 
 function addMessage(role, content) {
   const div = document.createElement('div');
@@ -23,10 +40,11 @@ function setStatus(t) { statusEl.textContent = t; }
 async function loadFiles() {
   const res = await fetch(`/api/workspace?session=${currentSession}`);
   const data = await res.json();
-  filesEl.innerHTML = data.files.map(f => `<div style="cursor:pointer" onclick="openFile('${f}')">${f}</div>`).join('') || '(empty)';
+  filesEl.innerHTML = (data.files || []).map(f => `<div onclick="openFile('${f}')">${f}</div>`).join('') || '(empty)';
 }
 function openFile(f) {
   frame.src = `/preview/${f}?session=${currentSession}&t=${Date.now()}`;
+  document.getElementById('preview-url').textContent = f;
 }
 
 async function loadSessions() {
@@ -48,7 +66,13 @@ async function send() {
   const res = await fetch('/api/chat/stream', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages, provider: providerEl.value, session: currentSession })
+    body: JSON.stringify({
+      messages,
+      provider: providerEl.value,
+      model: modelEl.value,
+      apiKey: apiKeys[providerEl.value] || '',
+      session: currentSession
+    })
   });
   const reader = res.body.getReader();
   const decoder = new TextDecoder();
@@ -64,8 +88,13 @@ async function send() {
       try {
         const d = JSON.parse(line.slice(6));
         if (d.chunk) { full += d.chunk; assistantDiv.textContent = full; }
-        if (d.done) { messages.push({ role: 'assistant', content: d.content }); setStatus(`Done (${d.iterations})`); loadFiles(); setTimeout(() => frame.src = `/preview/?session=${currentSession}&t=${Date.now()}`, 300); }
-        if (d.error) { assistantDiv.textContent = 'Error: ' + d.error; }
+        if (d.done) {
+          messages.push({ role: 'assistant', content: d.content });
+          setStatus(`Done (${d.iterations} iterations)`);
+          loadFiles();
+          setTimeout(() => frame.src = `/preview/?session=${currentSession}&t=${Date.now()}`, 300);
+        }
+        if (d.error) { assistantDiv.textContent = 'Error: ' + d.error; setStatus('Error'); }
       } catch {}
     }
   }
@@ -73,9 +102,9 @@ async function send() {
 
 document.getElementById('send').onclick = send;
 document.getElementById('refresh').onclick = () => { frame.src = `/preview/?session=${currentSession}&t=${Date.now()}`; loadFiles(); };
-document.getElementById('clear').onclick = () => { messages = []; messagesEl.innerHTML = ''; };
+document.getElementById('clear').onclick = () => { messages = []; messagesEl.innerHTML = ''; setStatus(''); };
 document.getElementById('new-session').onclick = async () => {
-  const res = await fetch('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Project' }) });
+  const res = await fetch('/api/sessions', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
   const data = await res.json();
   currentSession = data.id;
   await loadSessions();
@@ -84,8 +113,19 @@ document.getElementById('new-session').onclick = async () => {
   loadFiles();
   frame.src = `/preview/?session=${currentSession}`;
 };
+document.getElementById('settings-btn').onclick = () => {
+  settingsEl.style.display = settingsEl.style.display === 'none' ? 'block' : 'none';
+  apiKeyInput.value = apiKeys[providerEl.value] || '';
+};
+document.getElementById('save-key').onclick = () => {
+  apiKeys[providerEl.value] = apiKeyInput.value;
+  localStorage.setItem('wcode-keys', JSON.stringify(apiKeys));
+  settingsEl.style.display = 'none';
+  setStatus('API key saved');
+};
 sessionEl.onchange = () => { currentSession = sessionEl.value; messages = []; messagesEl.innerHTML = ''; loadFiles(); frame.src = `/preview/?session=${currentSession}`; };
 promptEl.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
 
+loadProviders();
 loadSessions();
 loadFiles();
