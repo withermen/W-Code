@@ -1,0 +1,7 @@
+{
+  "maxIterations": 10,
+  "commandTimeout": 60000,
+  "maxFileSize": 5242880,
+  "previewRefreshDelay": 300,
+  "defaultProvider": "openai"
+}
