@@ -1,12 +1,15 @@
 {
   "name": "w-code",
-  "version": "0.3.0",
-  "description": "High-quality free open-source alternative to Claude Code",
-  "main": "src/server/index.js",
+  "version": "0.4.0",
+  "description": "Free open-source alternative to Claude Code — Desktop UI",
+  "main": "electron/main.js",
   "scripts": {
     "start": "node src/server/index.js",
     "dev": "node --watch src/server/index.js",
-    "test": "node tests/basic.test.js"
+    "electron": "electron .",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac",
+    "build:linux": "electron-builder --linux"
   },
   "dependencies": {
     "express": "^4.21.2",
@@ -14,6 +17,32 @@
     "@anthropic-ai/sdk": "^0.32.1",
     "dotenv": "^16.4.7",
     "chalk": "^5.3.0"
+  },
+  "devDependencies": {
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.withermen.wcode",
+    "productName": "W-Code",
+    "directories": { "output": "dist" },
+    "files": [
+      "electron/**/*",
+      "src/**/*",
+      "public/**/*",
+      "prompts/**/*",
+      "design-system/**/*",
+      "examples/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   },
   "engines": { "node": ">=18" },
   "license": "Apache-2.0"
