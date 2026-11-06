@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>W-Code</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, -apple-system, sans-serif; height: 100vh; display: flex; background: #0f0f0f; color: #eee; }
+    #chat { width: 40%; display: flex; flex-direction: column; border-right: 1px solid #333; }
+    #preview { flex: 1; background: #1a1a1a; }
+    #messages { flex: 1; overflow-y: auto; padding: 1rem; }
+    #input { display: flex; padding: 1rem; border-top: 1px solid #333; }
+    #input input { flex: 1; padding: 0.75rem; background: #222; border: 1px solid #444; color: white; border-radius: 6px; }
+    #input button { margin-left: 0.5rem; padding: 0.75rem 1.5rem; background: #ea580c; border: none; color: white; border-radius: 6px; cursor: pointer; }
+    .msg { margin-bottom: 1rem; padding: 0.75rem; border-radius: 8px; }
+    .user { background: #2a2a2a; margin-left: 2rem; }
+    .assistant { background: #1e3a2f; }
+    iframe { width: 100%; height: 100%; border: none; background: white; }
+    h1 { padding: 1rem; font-size: 1.2rem; border-bottom: 1px solid #333; }
+  </style>
+</head>
+<body>
+  <div id="chat">
+    <h1>W-Code</h1>
+    <div id="messages"></div>
+    <div id="input">
+      <input id="prompt" placeholder="Describe what you want to build..." autofocus>
+      <button onclick="send()">Send</button>
+    </div>
+  </div>
+  <div id="preview">
+    <iframe id="frame" src="about:blank"></iframe>
+  </div>
+
+  <script>
+    const messages = [];
+    function addMsg(role, content) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + role;
+      div.textContent = content;
+      document.getElementById('messages').appendChild(div);
+      document.getElementById('messages').scrollTop = 99999;
+    }
+    async function send() {
+      const input = document.getElementById('prompt');
+      const text = input.value.trim();
+      if (!text) return;
+      input.value = '';
+      messages.push({ role: 'user', content: text });
+      addMsg('user', text);
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages })
+      });
+      const data = await res.json();
+      messages.push(data);
+      addMsg('assistant', data.content);
+    }
+    document.getElementById('prompt').addEventListener('keydown', e => {
+      if (e.key === 'Enter') send();
+    });
+  </script>
+</body>
+</html>
