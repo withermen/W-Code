@@ -15,17 +15,19 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, '../../public')));
 app.use('/preview', express.static(WORKSPACE));
 
-// Streaming endpoint (SSE)
+// Token-by-token style streaming via SSE (chunks as they arrive from the loop)
 app.post('/api/chat/stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders?.();
 
   const { messages, provider: providerName = config.defaultProvider, model, apiKey } = req.body;
   const provider = createProvider(providerName, apiKey);
 
   try {
     const result = await runAgentLoop(provider, messages, model, (chunk) => {
+      // Send each chunk immediately
       res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
     });
     res.write(`data: ${JSON.stringify({ done: true, content: result.content, iterations: result.iterations })}\n\n`);
@@ -35,7 +37,6 @@ app.post('/api/chat/stream', async (req, res) => {
   res.end();
 });
 
-// Regular endpoint (kept for compatibility)
 app.post('/api/chat', async (req, res) => {
   try {
     const { messages, provider: providerName = config.defaultProvider, model, apiKey } = req.body;
@@ -43,7 +44,6 @@ app.post('/api/chat', async (req, res) => {
     const result = await runAgentLoop(provider, messages, model, null);
     res.json({ role: 'assistant', content: result.content, iterations: result.iterations });
   } catch (err) {
-    logger.error(err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -65,8 +65,6 @@ app.get('/api/workspace', (req, res) => {
   res.json({ files: walk(WORKSPACE) });
 });
 
-app.get('/api/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
+app.get('/api/health', (req, res) => res.json({ ok: true, uptime: process.uptime() }));
 
-app.listen(PORT, () => {
-  logger.info(`W-Code → http://localhost:${PORT}`);
-});
+app.listen(PORT, () => logger.info(`W-Code http://localhost:${PORT}`));
