@@ -1,0 +1,23 @@
+{
+  "name": "w-code",
+  "version": "0.1.0",
+  "description": "Free open-source alternative to Claude Code. Multi-provider AI coding agent with live design preview.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "openai": "^4.70.0",
+    "@anthropic-ai/sdk": "^0.30.0",
+    "dotenv": "^16.4.5",
+    "cors": "^2.8.5",
+    "multer": "^1.4.5-lts.1",
+    "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "Apache-2.0"
+}
