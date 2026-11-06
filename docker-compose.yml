@@ -1,0 +1,11 @@
+services:
+  wcode:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./sessions:/app/sessions
+    environment:
+      - PORT=3000
+    env_file:
+      - .env
