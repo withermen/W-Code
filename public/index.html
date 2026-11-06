@@ -10,17 +10,16 @@
     <aside id="chat">
       <header>
         <div class="logo">W-Code</div>
-        <select id="provider">
-          <option value="openai">OpenAI</option>
-          <option value="anthropic">Anthropic</option>
-          <option value="groq">Groq</option>
-          <option value="openrouter">OpenRouter</option>
-          <option value="ollama">Ollama</option>
-          <option value="xai">xAI</option>
-        </select>
+        <select id="provider"></select>
+        <select id="model"></select>
         <select id="session"><option value="default">Default</option></select>
         <button id="new-session">+ New</button>
+        <button id="settings-btn">⚙</button>
       </header>
+      <div id="settings" style="display:none; padding:0.6rem; background:#111; border-bottom:1px solid #2a2a2a;">
+        <input id="api-key" type="password" placeholder="API Key" style="width:100%; padding:0.4rem; background:#0c0c0c; border:1px solid #2a2a2a; color:white; border-radius:4px; margin-bottom:0.4rem;">
+        <button id="save-key" class="primary" style="width:100%;">Save Key for this Provider</button>
+      </div>
       <div id="files"></div>
       <div id="messages"></div>
       <div id="status"></div>
