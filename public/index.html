@@ -5,31 +5,48 @@
   <title>W-Code</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: system-ui, -apple-system, sans-serif; height: 100vh; display: flex; background: #0f0f0f; color: #eee; }
-    #chat { width: 40%; display: flex; flex-direction: column; border-right: 1px solid #333; }
-    #preview { flex: 1; background: #1a1a1a; }
+    body { font-family: system-ui, -apple-system, sans-serif; height: 100vh; display: flex; background: #0a0a0a; color: #eee; }
+    #sidebar { width: 42%; display: flex; flex-direction: column; border-right: 1px solid #222; }
+    #preview { flex: 1; display: flex; flex-direction: column; background: #111; }
+    header { padding: 0.8rem 1rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
     #messages { flex: 1; overflow-y: auto; padding: 1rem; }
-    #input { display: flex; padding: 1rem; border-top: 1px solid #333; }
-    #input input { flex: 1; padding: 0.75rem; background: #222; border: 1px solid #444; color: white; border-radius: 6px; }
-    #input button { margin-left: 0.5rem; padding: 0.75rem 1.5rem; background: #ea580c; border: none; color: white; border-radius: 6px; cursor: pointer; }
-    .msg { margin-bottom: 1rem; padding: 0.75rem; border-radius: 8px; }
-    .user { background: #2a2a2a; margin-left: 2rem; }
-    .assistant { background: #1e3a2f; }
-    iframe { width: 100%; height: 100%; border: none; background: white; }
-    h1 { padding: 1rem; font-size: 1.2rem; border-bottom: 1px solid #333; }
+    #input-area { padding: 0.8rem; border-top: 1px solid #222; }
+    #input-area textarea { width: 100%; min-height: 60px; padding: 0.6rem; background: #1a1a1a; border: 1px solid #333; color: white; border-radius: 6px; resize: vertical; font-family: inherit; }
+    .controls { display: flex; gap: 0.5rem; margin-top: 0.5rem; }
+    select, button { padding: 0.5rem 0.8rem; background: #222; border: 1px solid #444; color: white; border-radius: 4px; }
+    button.primary { background: #ea580c; border-color: #ea580c; }
+    .msg { margin-bottom: 0.8rem; padding: 0.7rem; border-radius: 8px; white-space: pre-wrap; font-size: 0.92rem; line-height: 1.4; }
+    .user { background: #1f1f1f; margin-left: 1.5rem; }
+    .assistant { background: #14261c; }
+    iframe { flex: 1; border: none; background: white; }
+    .preview-bar { padding: 0.4rem 0.8rem; background: #1a1a1a; font-size: 0.8rem; color: #888; }
   </style>
 </head>
 <body>
-  <div id="chat">
-    <h1>W-Code</h1>
+  <div id="sidebar">
+    <header>
+      <strong>W-Code</strong>
+      <select id="provider">
+        <option value="openai">OpenAI</option>
+        <option value="anthropic">Anthropic</option>
+        <option value="groq">Groq</option>
+        <option value="openrouter">OpenRouter</option>
+        <option value="ollama">Ollama</option>
+        <option value="xai">xAI / Grok</option>
+      </select>
+    </header>
     <div id="messages"></div>
-    <div id="input">
-      <input id="prompt" placeholder="Describe what you want to build..." autofocus>
-      <button onclick="send()">Send</button>
+    <div id="input-area">
+      <textarea id="prompt" placeholder="Build a PHP login page, fix the design, write SQL..."></textarea>
+      <div class="controls">
+        <button class="primary" onclick="send()">Send</button>
+        <button onclick="refreshPreview()">Refresh Preview</button>
+      </div>
     </div>
   </div>
   <div id="preview">
-    <iframe id="frame" src="about:blank"></iframe>
+    <div class="preview-bar">Live Preview — files in /workspace are served here</div>
+    <iframe id="frame" src="/preview/"></iframe>
   </div>
 
   <script>
@@ -39,7 +56,7 @@
       div.className = 'msg ' + role;
       div.textContent = content;
       document.getElementById('messages').appendChild(div);
-      document.getElementById('messages').scrollTop = 99999;
+      document.getElementById('messages').scrollTop = 999999;
     }
     async function send() {
       const input = document.getElementById('prompt');
@@ -48,17 +65,26 @@
       input.value = '';
       messages.push({ role: 'user', content: text });
       addMsg('user', text);
+      const provider = document.getElementById('provider').value;
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages })
+        body: JSON.stringify({ messages, provider })
       });
       const data = await res.json();
+      if (data.error) {
+        addMsg('assistant', 'Error: ' + data.error);
+        return;
+      }
       messages.push(data);
       addMsg('assistant', data.content);
+      setTimeout(refreshPreview, 500);
+    }
+    function refreshPreview() {
+      document.getElementById('frame').src = '/preview/?' + Date.now();
     }
     document.getElementById('prompt').addEventListener('keydown', e => {
-      if (e.key === 'Enter') send();
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
     });
   </script>
 </body>
