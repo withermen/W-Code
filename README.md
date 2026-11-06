@@ -2,20 +2,20 @@
 
 **Free open-source alternative to Claude Code.**
 
-Left side: chat with your AI coding agent.  
-Right side: live browser preview of the design / app the AI is building.
+Left: chat with the AI agent.  
+Right: live browser preview of what the AI is building.
 
-Supports all major API providers (OpenAI, Anthropic, Google, Groq, OpenRouter, local models via Ollama, etc.).  
-Combines OpenCode-style tools + OpenDesign-style live preview and design system awareness.
+Supports all major providers. Combines OpenCode-style tools with OpenDesign-style live preview and design awareness.
 
 ## Features
 
-- Multi-provider (bring your own key)
-- Full agent tools: read/write files, run shell, search, web fetch
-- Live preview pane (right side) that updates as the AI builds
-- PHP, SQL, Node, Python, and more
-- System prompt inspired by OpenCode (slightly modified)
-- Design-aware (can follow design systems / avoid AI slop)
+- Multi-provider (OpenAI, Anthropic, Groq, OpenRouter, Ollama, xAI/Grok, any OpenAI-compatible)
+- File tools: read, write, list, search
+- Shell command execution
+- Live preview pane (right side)
+- PHP, SQL, Node, Python, HTML/CSS/JS support
+- System prompt inspired by OpenCode
+- Avoids AI slop by default
 - Apache 2.0
 
 ## Quick Start
@@ -25,21 +25,33 @@ git clone https://github.com/withermen/W-Code
 cd W-Code
 npm install
 cp .env.example .env
-# Add your API keys
+# Add at least one API key
 npm start
 ```
 
 Open http://localhost:3000
 
-## Providers Supported
+## Providers
 
-- OpenAI (GPT-4o, o1, etc.)
-- Anthropic (Claude)
-- Google Gemini
-- Groq
-- OpenRouter
-- Ollama (local)
-- Any OpenAI-compatible endpoint
+| Provider   | Env Variable          | Notes                  |
+|------------|-----------------------|------------------------|
+| OpenAI     | OPENAI_API_KEY        | Default                |
+| Anthropic  | ANTHROPIC_API_KEY     | Claude                 |
+| Groq       | GROQ_API_KEY          | Fast Llama             |
+| OpenRouter | OPENROUTER_API_KEY    | Many models            |
+| Ollama     | OLLAMA_BASE_URL       | Local                  |
+| xAI / Grok | XAI_API_KEY           | Optional               |
+
+## How Tools Work
+
+The agent can output:
+
+```
+TOOL: write_file {"path": "index.php", "content": "<?php echo 'hello'; ?>"}
+TOOL: run_command {"command": "php -S 0.0.0.0:8080"}
+```
+
+Results appear in the chat and the preview updates.
 
 ## License
 
