@@ -4,8 +4,12 @@ const path = require('path');
 const { createProvider, listProviders } = require('../providers');
 const { runAgentLoop } = require('../agents/loop');
 const { listSessions, createSession, getWorkspace } = require('../sessions');
+const { maybeSummarize } = require('../context/compass');
 const logger = require('../logger');
 const { loadConfig } = require('../config');
+const fs = require('fs');
+
+const SYSTEM = fs.readFileSync(path.join(__dirname, '../../prompts/system.md'), 'utf8');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,7 +35,8 @@ app.post('/api/chat/stream', async (req, res) => {
   const provider = createProvider(providerName, apiKey);
 
   try {
-    const result = await runAgentLoop(provider, messages, model, (chunk) => {
+    const processed = await maybeSummarize(provider, messages, SYSTEM);
+    const result = await runAgentLoop(provider, processed, model, (chunk) => {
       res.write(`data: ${JSON.stringify({ chunk })}\n\n`);
     });
     res.write(`data: ${JSON.stringify({ done: true, content: result.content, iterations: result.iterations })}\n\n`);
@@ -47,14 +52,13 @@ app.post('/api/sessions', (req, res) => res.json({ id: createSession(req.body.na
 app.get('/api/workspace', (req, res) => {
   const session = req.query.session || 'default';
   const ws = getWorkspace(session);
-  const fs = require('fs');
   const walk = (dir, prefix = '') => {
     const out = [];
     try {
-      for (const f of fs.readdirSync(dir)) {
+      for (const f of require('fs').readdirSync(dir)) {
         const full = path.join(dir, f);
         const rel = prefix + f;
-        if (fs.statSync(full).isDirectory()) out.push(...walk(full, rel + '/'));
+        if (require('fs').statSync(full).isDirectory()) out.push(...walk(full, rel + '/'));
         else out.push(rel);
       }
     } catch {}
