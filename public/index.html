@@ -14,36 +14,46 @@
         <select id="model"></select>
         <select id="session"><option value="default">Default</option></select>
         <button id="new-session" title="New"><img src="/icons/plus.svg" width="16" height="16"></button>
+        <button id="github-btn" title="GitHub">GH</button>
         <button id="git-btn" title="Git">Git</button>
         <button id="settings-btn" title="Settings"><img src="/icons/settings.svg" width="16" height="16"></button>
-        <button id="templates-btn" title="Templates">Tpl</button>
       </header>
+
+      <div id="github-panel" class="panel" style="display:none">
+        <h4>GitHub</h4>
+        <input id="gh-token" type="password" placeholder="GitHub Personal Access Token" style="width:100%;margin-bottom:0.4rem;">
+        <button id="gh-connect" class="primary">Connect</button>
+        <div id="gh-user" style="margin:0.4rem 0;font-size:0.85rem;"></div>
+        <select id="gh-repos" style="width:100%;margin-bottom:0.4rem;"><option>Select repo...</option></select>
+        <button id="gh-select">Use this repo</button>
+        <div id="gh-selected" style="margin-top:0.4rem;font-size:0.8rem;color:#888;"></div>
+        <hr style="margin:0.6rem 0;border-color:#333;">
+        <input id="target-file" placeholder="Target file (e.g. src/app.js)" style="width:100%;margin-bottom:0.3rem;">
+        <button id="push-target" class="primary">Push target file to GitHub</button>
+      </div>
+
       <div id="git-panel" class="panel" style="display:none">
-        <h4>Git</h4>
+        <h4>Local Git</h4>
         <div id="git-branch"></div>
-        <div id="git-status" style="font-family:monospace;font-size:0.8rem;max-height:80px;overflow:auto;margin:0.4rem 0;"></div>
-        <input id="commit-msg" placeholder="Commit message" style="width:100%;margin-bottom:0.3rem;">
+        <div id="git-status" style="font-family:monospace;font-size:0.8rem;max-height:60px;overflow:auto;"></div>
+        <input id="commit-msg" placeholder="Commit message" style="width:100%;margin:0.3rem 0;">
         <button id="git-commit" class="primary">Commit</button>
         <button id="git-diff">Diff</button>
-        <button id="git-log">Log</button>
-        <pre id="git-output" style="font-size:0.75rem;max-height:120px;overflow:auto;background:#111;padding:0.4rem;margin-top:0.4rem;"></pre>
+        <pre id="git-output" style="font-size:0.75rem;max-height:100px;overflow:auto;background:#111;padding:0.3rem;margin-top:0.3rem;"></pre>
       </div>
+
       <div id="settings-panel" class="panel" style="display:none">
         <h4>Settings</h4>
         <label>API Key <input id="api-key" type="password"></label>
-        <label>Temperature <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.2"></label>
         <label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option></select></label>
         <button id="save-settings" class="primary">Save</button>
       </div>
-      <div id="templates-panel" class="panel" style="display:none">
-        <h4>Templates</h4>
-        <div id="template-list"></div>
-      </div>
+
       <div id="files"></div>
       <div id="messages"></div>
       <div id="status"></div>
       <div id="composer">
-        <textarea id="prompt" placeholder="Describe what you want to build..."></textarea>
+        <textarea id="prompt" placeholder="Describe what you want to build... (or say 'write to src/app.js')"></textarea>
         <div class="actions">
           <button id="send" class="primary"><img src="/icons/send.svg" width="16" height="16"> Send</button>
           <button id="refresh"><img src="/icons/refresh.svg" width="16" height="16"></button>
