@@ -1,125 +1,125 @@
 # W-Code
 
-**Free open-source alternative to Claude Code.**
-
-Left: full agent chat with multi-provider support.  
-Right: live browser preview that updates as the AI builds.
+Free open-source AI coding agent with live preview.  
+Chat on the left, see the result on the right.
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/Node-%3E%3D18-green.svg)](package.json)
-[![Providers](https://img.shields.io/badge/Providers-10%2B-orange.svg)](#providers)
 
 ---
 
+## What it does
+
+W-Code is a local coding agent you control.  
+You talk to it, it reads and writes files, runs commands, and the preview updates live.
+
+It supports many model providers, connects to GitHub, has project templates, and follows a design system that avoids common AI-generated look.
+
+## Screenshot
+
 <div align="center">
-  <img src="docs/images/hero.svg" width="700" alt="W-Code">
+  <img src="docs/images/hero.svg" width="720" alt="W-Code interface concept">
 </div>
 
 ## Features
 
-- **Multi-provider** — OpenAI, Anthropic, Groq, OpenRouter, xAI, Ollama, Gemini, DeepSeek, Mistral, Together
-- **Live preview** — Right panel updates as files are written
-- **GitHub integration** — Connect with token, select repo, push files
-- **Local Git** — Status, diff, commit
-- **Project templates** — PHP+SQLite, Node API, Static site, React
-- **Design system** — Intentional tokens, anti-AI-slop rules
-- **Context compass** — Auto-summarizes long conversations (~170k tokens)
-- **File explorer** — Tree view, target file selection
-- **Settings** — API keys, theme (dark/light), temperature
-- **Desktop** — Electron support for `.exe`
+- Multi-provider (OpenAI, Anthropic, Groq, OpenRouter, xAI, Ollama, Gemini, DeepSeek, Mistral, Together)
+- Live preview pane
+- GitHub connect + push selected files
+- Local Git (status, diff, commit)
+- Project templates (PHP+SQLite, Node API, Static site, React)
+- Design system and anti-slop rules
+- Automatic conversation summarization for long sessions
+- File tree with target file selection
+- Dark / light theme
+- Electron desktop build
 
-## Quick Start
+## Install and run
 
 ```bash
-git clone https://github.com/withermen/W-Code
+git clone https://github.com/withermen/W-Code.git
 cd W-Code
 npm install
-cp .env.example .env   # optional
 npm start
 ```
 
 Open http://localhost:3000
 
-### Desktop (.exe)
+Add your API key in the settings panel (gear icon). Keys stay in the browser.
+
+### Build desktop app
 
 ```bash
 npm install
 npm run build:win
 ```
 
-Output in `dist/`.
+The installer appears in the `dist` folder.
 
-## Providers
+## Supported providers
 
-| Provider | Notes |
-|----------|-------|
-| OpenAI | Streaming + tools |
-| Anthropic | Claude + tool use |
-| Groq | Fast Llama |
-| OpenRouter | Many models |
-| xAI / Grok | Grok models |
-| Ollama | Local |
-| Google Gemini | Via OpenAI-compatible |
-| DeepSeek | Code-focused |
-| Mistral | Large models |
-| Together AI | Llama etc. |
+| Provider       | Type                  |
+|----------------|-----------------------|
+| OpenAI         | Streaming + tools     |
+| Anthropic      | Claude + tool use     |
+| Groq           | Fast inference        |
+| OpenRouter     | Many models           |
+| xAI            | Grok                  |
+| Ollama         | Local models          |
+| Google Gemini  | OpenAI-compatible     |
+| DeepSeek       | Code models           |
+| Mistral        | Large models          |
+| Together AI    | Open models           |
 
-Set API keys in the ⚙ panel (stored in browser).
+## Using GitHub
 
-## GitHub Integration
+1. Click the **GH** button.
+2. Paste a Personal Access Token with `repo` scope.
+3. Connect and choose a repository.
+4. Click a file in the tree to set it as the target.
+5. Push the file to the selected repository.
 
-1. Click **GH**
-2. Paste a Personal Access Token (repo scope)
-3. Connect → select a repository
-4. Click a file in the explorer (sets target)
-5. **Push target file to GitHub**
-
-## Architecture
+## How the agent works
 
 ```mermaid
-flowchart LR
-    A[User] --> B[Chat UI]
-    B --> C[Agent Loop]
-    C --> D[Tools]
-    D --> E[Workspace]
-    E --> F[Live Preview]
-    C --> G[GitHub API]
-    C --> H[Context Compass]
+flowchart TD
+    User -->|message| Chat
+    Chat --> Agent
+    Agent -->|tools| Files
+    Files --> Preview
+    Agent -->|optional| GitHub
+    Agent -->|long context| Summary
 ```
 
-## Project Structure
+## Folder layout
 
 ```
-src/
-├── server/          # Express + SSE
-├── providers/       # Multi-provider layer
-├── tools/           # File, shell, git, design tools
-├── agents/          # Agent loop
-├── github/          # GitHub API
-├── git/             # Local git
-├── context/         # Compass summarizer
-├── templates/       # Project starters
-└── sessions/        # Multi-project
-public/              # Frontend
-prompts/             # System prompt
-design-system/       # Tokens + DESIGN.md
-examples/            # PHP / SQL samples
-electron/            # Desktop wrapper
+src/server/       Express server and routes
+src/providers/    Model provider adapters
+src/tools/        File, shell, git, and design tools
+src/agents/       Agent loop
+src/github/       GitHub API client
+src/git/          Local git commands
+src/context/      Conversation summarizer
+src/templates/    Starter project templates
+public/           Web interface
+prompts/          System prompt
+design-system/    Color and type tokens
+examples/         PHP and SQL samples
+electron/         Desktop wrapper
 ```
 
-## Philosophy
+## Design rules
 
-- Intentional over average
-- No AI slop (no purple gradients, no Inter-only, no three identical cards)
-- Describe → Approve → Apply → Preview
-- Accessibility and readability first
+The agent is instructed to avoid typical AI-generated patterns:
+
+- No purple or indigo gradients
+- No Inter / Roboto as the only font
+- No three identical feature cards
+- No generic marketing phrases
+
+It prefers specific, readable, intentional interfaces.
 
 ## License
 
-Apache License 2.0. See [LICENSE](LICENSE).
-
----
-
-<div align="center">
-  <strong>Built for people who want a coding agent they control.</strong>
-</div>
+Apache License 2.0. See the [LICENSE](LICENSE) file.
