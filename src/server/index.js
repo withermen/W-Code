@@ -6,6 +6,7 @@ const { runAgentLoop } = require('../agents/loop');
 const { listSessions, createSession, getWorkspace } = require('../sessions');
 const { maybeSummarize } = require('../context/compass');
 const { TEMPLATES, applyTemplate } = require('../templates');
+const git = require('../git');
 const logger = require('../logger');
 const fs = require('fs');
 
@@ -31,12 +32,41 @@ app.post('/api/templates/apply', (req, res) => {
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
 
+// Git endpoints
+app.get('/api/git/status', async (req, res) => {
+  const data = await git.status(req.query.session);
+  res.json(data);
+});
+app.get('/api/git/diff', async (req, res) => {
+  const data = await git.diff(req.query.session);
+  res.json(data);
+});
+app.get('/api/git/log', async (req, res) => {
+  const data = await git.log(req.query.session, req.query.n || 15);
+  res.json(data);
+});
+app.get('/api/git/branches', async (req, res) => {
+  const data = await git.branches(req.query.session);
+  res.json(data);
+});
+app.post('/api/git/commit', async (req, res) => {
+  const { message, session = 'default' } = req.body;
+  if (!message) return res.status(400).json({ error: 'Message required' });
+  const data = await git.commit(message, session);
+  res.json(data);
+});
+app.post('/api/git/checkout', async (req, res) => {
+  const { branch, session = 'default' } = req.body;
+  const data = await git.checkout(branch, session);
+  res.json(data);
+});
+
 app.post('/api/chat/stream', async (req, res) => {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const { messages, provider: providerName = 'openai', model, apiKey, session = 'default', temperature } = req.body;
+  const { messages, provider: providerName = 'openai', model, apiKey, session = 'default' } = req.body;
   process.env.WORKSPACE = getWorkspace(session);
   const provider = createProvider(providerName, apiKey);
 
@@ -70,19 +100,7 @@ app.get('/api/workspace', (req, res) => {
     } catch {}
     return out;
   };
-  res.json({ tree: walk(ws), session: req.query.session || 'default' });
-});
-
-app.post('/api/file/delete', (req, res) => {
-  const { path: p, session = 'default' } = req.body;
-  const full = path.join(getWorkspace(session), p);
-  try { fs.unlinkSync(full); res.json({ ok: true }); } catch (e) { res.status(400).json({ error: e.message }); }
-});
-
-app.post('/api/file/rename', (req, res) => {
-  const { from, to, session = 'default' } = req.body;
-  const ws = getWorkspace(session);
-  try { fs.renameSync(path.join(ws, from), path.join(ws, to)); res.json({ ok: true }); } catch (e) { res.status(400).json({ error: e.message }); }
+  res.json({ tree: walk(ws) });
 });
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
