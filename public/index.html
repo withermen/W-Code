@@ -13,12 +13,24 @@
         <select id="provider"></select>
         <select id="model"></select>
         <select id="session"><option value="default">Default</option></select>
-        <button id="new-session" title="New project"><img src="/icons/plus.svg" width="16" height="16" alt=""></button>
-        <button id="settings-btn" title="Settings"><img src="/icons/settings.svg" width="16" height="16" alt=""></button>
+        <button id="new-session" title="New"><img src="/icons/plus.svg" width="16" height="16"></button>
+        <button id="settings-btn" title="Settings"><img src="/icons/settings.svg" width="16" height="16"></button>
+        <button id="templates-btn" title="Templates">Tpl</button>
       </header>
-      <div id="settings" style="display:none; padding:0.6rem; background:#111; border-bottom:1px solid #2a2a2a;">
-        <input id="api-key" type="password" placeholder="API Key" style="width:100%; padding:0.4rem; background:#0c0c0c; border:1px solid #2a2a2a; color:white; border-radius:4px; margin-bottom:0.4rem;">
-        <button id="save-key" class="primary" style="width:100%;">Save Key</button>
+      <div id="settings-panel" class="panel" style="display:none">
+        <h4>Settings</h4>
+        <label>API Key <input id="api-key" type="password"></label>
+        <label>Temperature <input id="temperature" type="number" min="0" max="2" step="0.1" value="0.2"></label>
+        <label>Max Tokens <input id="max-tokens" type="number" value="4096"></label>
+        <label>Theme <select id="theme"><option value="dark">Dark</option><option value="light">Light</option></select></label>
+        <button id="save-settings" class="primary">Save</button>
+        <button id="export-settings">Export</button>
+        <button id="import-settings">Import</button>
+        <input type="file" id="import-file" accept=".json" style="display:none">
+      </div>
+      <div id="templates-panel" class="panel" style="display:none">
+        <h4>Templates</h4>
+        <div id="template-list"></div>
       </div>
       <div id="files"></div>
       <div id="messages"></div>
@@ -26,8 +38,8 @@
       <div id="composer">
         <textarea id="prompt" placeholder="Describe what you want to build..."></textarea>
         <div class="actions">
-          <button id="send" class="primary"><img src="/icons/send.svg" width="16" height="16" alt=""> Send</button>
-          <button id="refresh"><img src="/icons/refresh.svg" width="16" height="16" alt=""></button>
+          <button id="send" class="primary"><img src="/icons/send.svg" width="16" height="16"> Send</button>
+          <button id="refresh"><img src="/icons/refresh.svg" width="16" height="16"></button>
           <button id="clear">Clear</button>
         </div>
       </div>
@@ -35,6 +47,11 @@
     <main id="preview">
       <div class="preview-header">
         <span>Live Preview</span>
+        <select id="device">
+          <option value="desktop">Desktop</option>
+          <option value="tablet">Tablet</option>
+          <option value="mobile">Mobile</option>
+        </select>
         <span id="preview-url">/</span>
       </div>
       <iframe id="frame" src="/preview/?session=default"></iframe>
