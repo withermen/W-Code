@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="200" viewBox="0 0 900 200">
+  <rect width="900" height="200" fill="#0c0c0c"/>
+  <text x="40" y="90" fill="#f97316" font-family="system-ui" font-size="48" font-weight="700">W-Code</text>
+  <text x="40" y="140" fill="#a3a3a3" font-family="system-ui" font-size="20">Free open-source alternative to Claude Code</text>
+  <rect x="620" y="70" width="240" height="60" rx="8" fill="#161616" stroke="#2a2a2a"/>
+  <text x="740" y="108" text-anchor="middle" fill="#f0f0f0" font-family="system-ui" font-size="16">Chat + Live Preview</text>
+</svg>
