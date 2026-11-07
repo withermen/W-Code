@@ -5,69 +5,77 @@ const execAsync = promisify(exec);
 const path = require('path');
 const fs = require('fs');
 
-const extraTools = {
-  async git_status() {
-    try {
-      const { stdout } = await execAsync('git status --short', { cwd: process.env.WORKSPACE || '.' });
-      return stdout || 'Clean';
-    } catch { return 'Not a git repo or error'; }
+const extra = {
+  async delete_file({ path: filePath }) {
+    const full = path.resolve(process.env.WORKSPACE || '.', filePath);
+    if (!full.startsWith(path.resolve(process.env.WORKSPACE || '.'))) throw new Error('Outside workspace');
+    fs.unlinkSync(full);
+    return `Deleted ${filePath}`;
   },
-  async git_commit({ message }) {
+  async rename_file({ from, to }) {
+    const ws = path.resolve(process.env.WORKSPACE || '.');
+    const src = path.resolve(ws, from);
+    const dest = path.resolve(ws, to);
+    if (!src.startsWith(ws) || !dest.startsWith(ws)) throw new Error('Outside workspace');
+    fs.renameSync(src, dest);
+    return `Renamed ${from} → ${to}`;
+  },
+  async database_query({ query, db = 'app.db' }) {
+    const full = path.resolve(process.env.WORKSPACE || '.', db);
     try {
-      await execAsync('git add -A', { cwd: process.env.WORKSPACE || '.' });
-      const { stdout } = await execAsync(`git commit -m "${message.replace(/"/g, '\\"')}"`, { cwd: process.env.WORKSPACE || '.' });
-      return stdout;
+      const { stdout } = await execAsync(`sqlite3 "${full}" "${query.replace(/"/g, '\\"')}"`);
+      return stdout || '(no output)';
     } catch (e) { return e.message; }
   },
-  async install_package({ manager = 'npm', package: pkg }) {
-    const cmd = manager === 'composer' ? `composer require ${pkg}` : `npm install ${pkg}`;
-    return tools.run_command({ command: cmd });
+  async format_code({ path: filePath }) {
+    const full = path.resolve(process.env.WORKSPACE || '.', filePath);
+    if (filePath.endsWith('.js') || filePath.endsWith('.jsx') || filePath.endsWith('.ts')) {
+      return tools.run_command({ command: `npx prettier --write "${filePath}"` });
+    }
+    if (filePath.endsWith('.php')) {
+      return tools.run_command({ command: `php-cs-fixer fix "${filePath}" || echo "php-cs-fixer not available"` });
+    }
+    return 'No formatter for this file type';
   },
-  async web_fetch({ url }) {
+  async git_diff() {
     try {
-      const res = await fetch(url);
-      const text = await res.text();
-      return text.slice(0, 8000);
-    } catch (e) { return e.message; }
+      const { stdout } = await execAsync('git diff', { cwd: process.env.WORKSPACE || '.' });
+      return stdout || 'No changes';
+    } catch { return 'Not a git repo'; }
   },
-  async create_from_example({ example, dest }) {
-    const map = {
-      'php/users': path.join(__dirname, '../../examples/php/users.php'),
-      'sql/schema': path.join(__dirname, '../../examples/sql/schema.sql')
-    };
-    const src = map[example];
-    if (!src) return 'Unknown example';
-    const target = path.join(process.env.WORKSPACE || path.join(__dirname, '../../workspace'), dest || path.basename(src));
-    fs.copyFileSync(src, target);
-    return `Copied to ${dest || path.basename(src)}`;
-  },
-  async apply_design_skill({ skill, target }) {
-    return `Design skill "${skill}" applied to ${target || 'project'}. Follow design-system/DESIGN.md and tokens.css. No purple gradients, no Inter-only, no three identical cards.`;
+  async git_branch() {
+    try {
+      const { stdout } = await execAsync('git branch --show-current', { cwd: process.env.WORKSPACE || '.' });
+      return stdout.trim();
+    } catch { return 'unknown'; }
   }
 };
 
-Object.assign(tools, extraTools);
+Object.assign(tools, extra);
 
 const toolDefinitions = [
   { type: 'function', function: { name: 'read_file', description: 'Read file', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } } },
   { type: 'function', function: { name: 'write_file', description: 'Write file', parameters: { type: 'object', properties: { path: { type: 'string' }, content: { type: 'string' } }, required: ['path', 'content'] } } },
   { type: 'function', function: { name: 'edit_file', description: 'Edit file', parameters: { type: 'object', properties: { path: { type: 'string' }, old_string: { type: 'string' }, new_string: { type: 'string' } }, required: ['path', 'old_string', 'new_string'] } } },
+  { type: 'function', function: { name: 'delete_file', description: 'Delete file', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } } },
+  { type: 'function', function: { name: 'rename_file', description: 'Rename file', parameters: { type: 'object', properties: { from: { type: 'string' }, to: { type: 'string' } }, required: ['from', 'to'] } } },
   { type: 'function', function: { name: 'list_dir', description: 'List directory', parameters: { type: 'object', properties: { path: { type: 'string' } } } } },
   { type: 'function', function: { name: 'search', description: 'Search code', parameters: { type: 'object', properties: { query: { type: 'string' } }, required: ['query'] } } },
   { type: 'function', function: { name: 'run_command', description: 'Run shell command', parameters: { type: 'object', properties: { command: { type: 'string' } }, required: ['command'] } } },
   { type: 'function', function: { name: 'tree', description: 'File tree', parameters: { type: 'object', properties: { path: { type: 'string' }, depth: { type: 'number' } } } } },
   { type: 'function', function: { name: 'git_status', description: 'Git status', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'git_diff', description: 'Git diff', parameters: { type: 'object', properties: {} } } },
   { type: 'function', function: { name: 'git_commit', description: 'Git commit', parameters: { type: 'object', properties: { message: { type: 'string' } }, required: ['message'] } } },
-  { type: 'function', function: { name: 'install_package', description: 'Install npm or composer package', parameters: { type: 'object', properties: { package: { type: 'string' }, manager: { type: 'string' } }, required: ['package'] } } },
-  { type: 'function', function: { name: 'web_fetch', description: 'Fetch URL content', parameters: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'] } } },
+  { type: 'function', function: { name: 'install_package', description: 'Install package', parameters: { type: 'object', properties: { package: { type: 'string' }, manager: { type: 'string' } }, required: ['package'] } } },
+  { type: 'function', function: { name: 'web_fetch', description: 'Fetch URL', parameters: { type: 'object', properties: { url: { type: 'string' } }, required: ['url'] } } },
+  { type: 'function', function: { name: 'database_query', description: 'Run SQLite query', parameters: { type: 'object', properties: { query: { type: 'string' }, db: { type: 'string' } }, required: ['query'] } } },
+  { type: 'function', function: { name: 'format_code', description: 'Format file', parameters: { type: 'object', properties: { path: { type: 'string' } }, required: ['path'] } } },
   { type: 'function', function: { name: 'apply_design_skill', description: 'Apply design principles', parameters: { type: 'object', properties: { skill: { type: 'string' }, target: { type: 'string' } }, required: ['skill'] } } },
-  { type: 'function', function: { name: 'create_from_example', description: 'Copy example into workspace', parameters: { type: 'object', properties: { example: { type: 'string' }, dest: { type: 'string' } }, required: ['example'] } } }
+  { type: 'function', function: { name: 'create_from_example', description: 'Copy example', parameters: { type: 'object', properties: { example: { type: 'string' }, dest: { type: 'string' } }, required: ['example'] } } }
 ];
 
 async function executeTool(name, args) {
-  if (typeof tools[name] === 'function') {
-    return await tools[name](args || {});
-  }
+  if (typeof tools[name] === 'function') return await tools[name](args || {});
   return `Unknown tool: ${name}`;
 }
 
